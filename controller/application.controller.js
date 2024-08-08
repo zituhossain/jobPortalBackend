@@ -1,6 +1,9 @@
-import { errorHandler, responseHandler } from "../middlewares/responseHandler";
-import Application from "../models/Application.model";
-import Job from "../models/job.model";
+import {
+  errorHandler,
+  responseHandler,
+} from "../middlewares/responseHandler.js";
+import Application from "../models/Application.model.js";
+import Job from "../models/job.model.js";
 
 export const applyJob = async (req, res) => {
   try {
