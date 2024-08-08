@@ -1,23 +1,21 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  errorHandler,
+  responseHandler,
+} from "../middlewares/responseHandler.js";
 
 export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role } = req.body;
     if (!fullname || !email || !phoneNumber || !password || !role) {
-      return res.status(400).json({
-        message: "All fields are required",
-        success: false,
-      });
+      return responseHandler(res, 400, "All fields are required", false);
     }
     const user = await User.findOne({ email });
 
     if (user) {
-      return res.status(400).json({
-        message: "User already exists",
-        success: false,
-      });
+      return responseHandler(res, 400, "User already exists", false);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -29,16 +27,10 @@ export const register = async (req, res) => {
       password: hashedPassword,
       role,
     });
-    return res.status(201).json({
-      message: "User created successfully",
-      success: true,
-    });
+
+    return responseHandler(res, 201, "User created successfully", true);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Something went wrong",
-      success: false,
-    });
+    return errorHandler(res, error);
   }
 };
 
@@ -46,32 +38,26 @@ export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password || !role) {
-      return res.status(400).json({
-        message: "All fields are required",
-        success: false,
-      });
+      return responseHandler(res, 400, "All fields are required", false);
     }
     let user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Incorrect email or password",
-        success: false,
-      });
+      return responseHandler(res, 400, "Incorrect email or password", false);
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      return res.status(400).json({
-        message: "Incorrect email or password",
-        success: false,
-      });
+      return responseHandler(res, 400, "Incorrect email or password", false);
     }
 
     if (role !== user.role) {
-      return res.status(400).json({
-        message: "Account does't exist for this role",
-      });
+      return responseHandler(
+        res,
+        400,
+        "Account does't exist for this role",
+        false
+      );
     }
 
     const tokenData = {
@@ -105,11 +91,7 @@ export const login = async (req, res) => {
         success: true,
       });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Something went wrong",
-      success: false,
-    });
+    return errorHandler(res, error);
   }
 };
 
@@ -120,11 +102,7 @@ export const logout = async (req, res) => {
       success: true,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Something went wrong",
-      success: false,
-    });
+    return errorHandler(res, error);
   }
 };
 
@@ -140,10 +118,7 @@ export const updateProfile = async (req, res) => {
 
     let user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-        success: false,
-      });
+      return responseHandler(res, 404, "User not found", false);
     }
 
     // updating data
@@ -164,16 +139,10 @@ export const updateProfile = async (req, res) => {
       profile: user.profile,
     };
 
-    return res.status(200).json({
-      message: "Profile updated successfully",
+    return responseHandler(res, 200, "Profile updated successfully", true, {
       user,
-      success: true,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: "Something went wrong",
-      success: false,
-    });
+    return errorHandler(res, error);
   }
 };
