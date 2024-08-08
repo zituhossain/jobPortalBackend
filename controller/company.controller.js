@@ -33,3 +33,53 @@ export const registerCompany = async (req, res) => {
     return errorHandler(res, error);
   }
 };
+
+export const getCompany = async (req, res) => {
+  try {
+    const userId = req.id;
+    const companies = await Company.find({ userId });
+    if (!companies) {
+      return responseHandler(res, 404, "Companies not found", false);
+    }
+    return responseHandler(res, 200, "Companies fetched successfully", true, {
+      companies,
+    });
+  } catch (error) {
+    return errorHandler(res, error);
+  }
+};
+
+export const getCompanyById = async (req, res) => {
+  try {
+    const companyId = req.params.id;
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return responseHandler(res, 404, "Company not found", false);
+    }
+    return responseHandler(res, 200, "Company fetched successfully", true, {
+      company,
+    });
+  } catch (error) {
+    return errorHandler(res, error);
+  }
+};
+
+export const updateCompany = async (req, res) => {
+  try {
+    const { name, description, website, location } = req.body;
+    const companyId = req.params.id;
+    const file = req.file;
+    // TODO: Cloudinary implementation
+
+    const updateData = { name, description, website, location };
+    const company = await Company.findByIdAndUpdate(companyId, updateData, {
+      new: true,
+    });
+    if (!company) {
+      return responseHandler(res, 404, "Company not found", false);
+    }
+    return responseHandler(res, 200, "Company updated successfully", true, {
+      company,
+    });
+  } catch (error) {}
+};
