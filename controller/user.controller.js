@@ -9,6 +9,8 @@ import {
 export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role } = req.body;
+    const file = req.file;
+
     if (!fullname || !email || !phoneNumber || !password || !role) {
       return responseHandler(res, 400, "All fields are required", false);
     }
@@ -20,12 +22,21 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let profileUrl = null;
+
+    if (file) {
+      profileUrl = `/uploads/${file.originalname}`;
+    }
+
     await User.create({
       fullname,
       email,
       phoneNumber,
       password: hashedPassword,
       role,
+      profile: {
+        profilePhoto: profileUrl,
+      },
     });
 
     return responseHandler(res, 201, "User created successfully", true);
