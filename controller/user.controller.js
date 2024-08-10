@@ -9,7 +9,9 @@ import {
 export const register = async (req, res) => {
   try {
     const { fullname, email, phoneNumber, password, role } = req.body;
+    console.log(fullname, email, phoneNumber, password, role);
     const file = req.file;
+    console.log("uploaded file", file);
 
     if (!fullname || !email || !phoneNumber || !password || !role) {
       return responseHandler(res, 400, "All fields are required", false);
