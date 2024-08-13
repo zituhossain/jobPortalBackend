@@ -5,17 +5,21 @@ import {
   errorHandler,
   responseHandler,
 } from "../middlewares/responseHandler.js";
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const register = async (req, res) => {
   try {
-    const { fullname, email, phoneNumber, password, role } = req.body;
-    console.log(fullname, email, phoneNumber, password, role);
-    const file = req.file;
-    console.log("uploaded file", file);
+    const { fullName, email, phoneNumber, password, role } = req.body;
 
-    if (!fullname || !email || !phoneNumber || !password || !role) {
+    if (!fullName || !email || !phoneNumber || !password || !role) {
       return responseHandler(res, 400, "All fields are required", false);
     }
+
+    const file = req.file;
+    const fileUri = getDataUri(file);
+    const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+
     const user = await User.findOne({ email });
 
     if (user) {
@@ -24,20 +28,14 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let profileUrl = null;
-
-    if (file) {
-      profileUrl = `/uploads/${file.originalname}`;
-    }
-
     await User.create({
-      fullname,
+      fullName,
       email,
       phoneNumber,
       password: hashedPassword,
       role,
       profile: {
-        profilePhoto: profileUrl,
+        profilePhoto: cloudResponse.secure_url,
       },
     });
 
@@ -83,7 +81,7 @@ export const login = async (req, res) => {
 
     user = {
       _id: user._id,
-      fullname: user.fullname,
+      fullName: user.fullName,
       email: user.email,
       phoneNumber: user.phoneNumber,
       role: user.role,
@@ -99,7 +97,7 @@ export const login = async (req, res) => {
         secure: true,
       })
       .json({
-        message: `Welcome back ${user.fullname}`,
+        message: `Welcome back ${user.fullName}`,
         user,
         success: true,
       });
@@ -121,8 +119,11 @@ export const logout = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { fullname, email, phoneNumber, bio, skills } = req.body;
+    const { fullName, email, phoneNumber, bio, skills } = req.body;
     const file = req.file;
+    const fileUri = getDataUri(file);
+    const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+
     let skillsArray;
     if (skills) {
       skillsArray = skills.split(",");
@@ -135,17 +136,22 @@ export const updateProfile = async (req, res) => {
     }
 
     // updating data
-    if (fullname) user.fullname = fullname;
+    if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (phoneNumber) user.phoneNumber = phoneNumber;
     if (bio) user.profile.bio = bio;
     if (skills) user.profile.skills = skillsArray;
 
+    if (cloudResponse) {
+      user.profile.resume = cloudResponse.secure_url;
+      user.profile.resumeOriginalName = file.originalname;
+    }
+
     await user.save();
 
     user = {
       _id: user._id,
-      fullname: user.fullname,
+      fullName: user.fullName,
       email: user.email,
       phoneNumber: user.phoneNumber,
       role: user.role,
