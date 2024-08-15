@@ -3,6 +3,8 @@ import {
   responseHandler,
 } from "../middlewares/responseHandler.js";
 import Company from "../models/company.model.js";
+import cloudinary from "../utils/cloudinary.js";
+import getDataUri from "../utils/datauri.js";
 
 export const registerCompany = async (req, res) => {
   try {
@@ -69,9 +71,23 @@ export const updateCompany = async (req, res) => {
     const { name, description, website, location } = req.body;
     const companyId = req.params.id;
     const file = req.file;
-    // TODO: Cloudinary implementation
+
+    let cloudResponse;
+    let logo;
+
+    if (file) {
+      const fileUri = getDataUri(file);
+      cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+
+      logo = cloudResponse?.secure_url;
+    }
 
     const updateData = { name, description, website, location };
+
+    if (logo) {
+      updateData.logo = logo;
+    }
+
     const company = await Company.findByIdAndUpdate(companyId, updateData, {
       new: true,
     });
@@ -81,5 +97,7 @@ export const updateCompany = async (req, res) => {
     return responseHandler(res, 200, "Company updated successfully", true, {
       company,
     });
-  } catch (error) {}
+  } catch (error) {
+    return errorHandler(res, error);
+  }
 };
