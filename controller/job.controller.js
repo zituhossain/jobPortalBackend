@@ -15,8 +15,7 @@ export const postJob = async (req, res) => {
       location,
       position,
       jobType,
-      company,
-      created_by,
+      companyId,
     } = req.body;
     const userId = req.id;
 
@@ -29,7 +28,7 @@ export const postJob = async (req, res) => {
       !location ||
       !position ||
       !jobType ||
-      !company
+      !companyId
     ) {
       return responseHandler(res, 400, "All fields are required", false);
     }
@@ -43,7 +42,7 @@ export const postJob = async (req, res) => {
       location,
       position,
       jobType,
-      company,
+      company: companyId,
       created_by: userId,
     });
 
@@ -99,7 +98,9 @@ export const getJobById = async (req, res) => {
 export const getAdminJobs = async (req, res) => {
   try {
     const adminId = req.id;
-    const jobs = await Job.find({ created_by: adminId });
+    const jobs = await Job.find({ created_by: adminId }).populate({
+      path: "company",
+    });
     if (!jobs) {
       return responseHandler(res, 404, "Jobs not found", false);
     }

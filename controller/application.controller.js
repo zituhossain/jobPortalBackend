@@ -122,6 +122,7 @@ export const updateStatus = async (req, res) => {
       true
     );
   } catch (error) {
+    console.log(error);
     return errorHandler(res, error);
   }
 };
